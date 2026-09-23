@@ -28,8 +28,8 @@
 --     LV4：≥1600返16，≥8500按1%返（上限100）
 --     LV5：≥6000返60，≥35000按1%返（上限500）
 --   组5-高活跃（三门槛）：
---     LV4：≥4000返30，≥18000返150，>18000按1%返（上限500）
---     LV5：≥18000返150，≥100000返800，>100000按1%返（上限1500）
+--     LV4：≥5000返30，≥20000返150，>20000按1%返（上限500）
+--     LV5：≥20000返150，≥100000返800，>100000按1%返（上限1500）
 --
 -- NULL处理：
 --   LEFT JOIN后无数据为NULL，NULL比较返回NULL（不满足），自动落入下一优先级
@@ -348,22 +348,22 @@ user_final AS (
                    0)
 
             -- ===== 组5：高活跃 → 投注达标返（三门槛） =====
-            -- LV4：>18000按1%返(上限500)，≥18000返150，≥4000返30，<4000返0
-            -- LV5：>100000按1%返(上限1500)，≥100000返800，≥18000返150，<18000返0
+            -- LV4：>20000按1%返(上限500)，≥20000返150，≥5000返30，<5000返0
+            -- LV5：>100000按1%返(上限1500)，≥100000返800，≥20000返150，<20000返0
             WHEN ug.grp_id = 5 THEN
                 IF(ug.lv = 5,
                    CASE
                        WHEN COALESCE(bb.total_bet, 0) > 100000
                             THEN LEAST(COALESCE(bb.total_bet, 0) * 0.01, 1500)
                        WHEN COALESCE(bb.total_bet, 0) >= 100000 THEN 800
-                       WHEN COALESCE(bb.total_bet, 0) >= 18000  THEN 150
+                       WHEN COALESCE(bb.total_bet, 0) >= 20000  THEN 150
                        ELSE 0
                    END,
                    CASE
-                       WHEN COALESCE(bb.total_bet, 0) > 18000
+                       WHEN COALESCE(bb.total_bet, 0) > 20000
                             THEN LEAST(COALESCE(bb.total_bet, 0) * 0.01, 500)
-                       WHEN COALESCE(bb.total_bet, 0) >= 18000 THEN 150
-                       WHEN COALESCE(bb.total_bet, 0) >= 4000  THEN 30
+                       WHEN COALESCE(bb.total_bet, 0) >= 20000 THEN 150
+                       WHEN COALESCE(bb.total_bet, 0) >= 5000  THEN 30
                        ELSE 0
                    END)
 
@@ -406,9 +406,9 @@ user_final AS (
                  AND COALESCE(bg.ggr, 0) * 0.05 > 100         THEN 1
 
             -- 组5 投注达标返：仅最高档（>阈值按1%返）才有上限
-            -- LV4：投注>18000 且 bet×1%>500（即bet>50000）
+            -- LV4：投注>20000 且 bet×1%>500（即bet>50000）
             WHEN ug.grp_id = 5 AND ug.lv = 4
-                 AND COALESCE(bb.total_bet, 0) > 18000
+                 AND COALESCE(bb.total_bet, 0) > 20000
                  AND COALESCE(bb.total_bet, 0) * 0.01 > 500   THEN 1
             -- LV5：投注>100000 且 bet×1%>1500（即bet>150000）
             WHEN ug.grp_id = 5 AND ug.lv = 5
