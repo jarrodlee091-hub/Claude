@@ -5,6 +5,9 @@
 --   针对LV4-5用户设计6类互斥权益（按优先级分组，每个用户只进一个组）
 --   优先级：断存 > 存款下滑 > 投注下滑 > 高输值 > 高活跃 > 保底
 --
+-- 基础人群门槛：
+--   9.21当日存款≥20 且 当日投注额≥20（不满足则不进入任何组）
+--
 -- 日期说明：
 --   VIP快照    ：9.21（pt='20260921'）→ 确定用户等级
 --   过去7日     ：9.15-9.21（相对于9.21）→ 近期行为窗口
@@ -39,7 +42,7 @@ WITH
 -- ============================
 -- 取9.21当天的前端VIP等级，只保留LV4和LV5
 -- 同一用户可能有多条记录（多站点），取最高等级
-user_level AS (
+user_level_raw AS (
     SELECT login_name, lv
     FROM (
         SELECT LOWER(TRIM(login_name)) AS login_name, lv,
@@ -49,6 +52,43 @@ user_level AS (
     ) t
     WHERE rn = 1
       AND lv IN (4, 5)
+),
+
+-- ============================
+-- 第1.1部分：9.21当日存款（基础门槛判断用）
+-- ============================
+base_dep_21 AS (
+    SELECT LOWER(TRIM(login_name)) AS login_name,
+           SUM(CAST(deposit_amount AS DOUBLE)) AS dep_21
+    FROM SuperEngineProject.dws_user_deposit_sum_di
+    WHERE pt = '20260921'
+      AND trans_site_id IN (1,5,6,11,33)
+    GROUP BY LOWER(TRIM(login_name))
+),
+
+-- ============================
+-- 第1.2部分：9.21当日投注（基础门槛判断用）
+-- ============================
+base_bet_21 AS (
+    SELECT LOWER(TRIM(login_name)) AS login_name,
+           SUM(CAST(totalvalidamount AS DOUBLE)) AS bet_21
+    FROM superengineproject.t_daily_bet_all
+    WHERE pt = '20260921'
+      AND bet_site_id IN (1,5,6,11,33)
+    GROUP BY LOWER(TRIM(login_name))
+),
+
+-- ============================
+-- 第1.3部分：基础人群过滤
+-- ============================
+-- LV4-5用户 且 9.21当日存款≥20 且 当日投注≥20
+user_level AS (
+    SELECT ul.login_name, ul.lv
+    FROM user_level_raw ul
+    INNER JOIN base_dep_21 bd21 ON ul.login_name = bd21.login_name
+    INNER JOIN base_bet_21 bb21 ON ul.login_name = bb21.login_name
+    WHERE bd21.dep_21 >= 20
+      AND bb21.bet_21 >= 20
 ),
 
 -- ============================
