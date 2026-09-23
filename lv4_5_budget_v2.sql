@@ -10,8 +10,8 @@
 --
 -- 日期说明：
 --   VIP快照    ：9.21（pt='20260921'）→ 确定用户等级
---   过去7日     ：9.15-9.21（相对于9.21）→ 近期行为窗口
---   过去30日    ：8.23-9.21（相对于9.21）→ 长期行为窗口
+--   过去7日     ：9.14-9.20（9.21前7天，不含当日）→ 近期行为窗口
+--   过去30日    ：8.22-9.20（9.21前30天，不含当日）→ 长期行为窗口
 --   高输值判断  ：9.21当日GGR（非7日累计）
 --   预算测算日  ：9.22（pt='20260922'）→ 用当日实际数据估算各组预算
 --
@@ -95,7 +95,7 @@ user_level AS (
 -- 第二部分：存款行为统计（分组判断用，相对于9.21）
 -- ============================
 
--- 过去30日存款统计（8.23-9.21）
+-- 过去30日存款统计（8.22-9.20）
 -- 先按用户+日期聚合得到每日存款额，再统计：
 --   total_dep_30d = 30日内总存款额
 --   dep_days_30d  = 30日内有存款的天数（作为日均分母）
@@ -109,7 +109,7 @@ dep_30d AS (
         SELECT LOWER(TRIM(login_name)) AS login_name, pt,
                SUM(CAST(deposit_amount AS DOUBLE)) AS daily_dep
         FROM SuperEngineProject.dws_user_deposit_sum_di
-        WHERE pt >= '20260823' AND pt <= '20260921'
+        WHERE pt >= '20260822' AND pt <= '20260920'
           AND trans_site_id IN (1,5,6,11,33)
         GROUP BY LOWER(TRIM(login_name)), pt
         HAVING SUM(CAST(deposit_amount AS DOUBLE)) > 0
@@ -117,7 +117,7 @@ dep_30d AS (
     GROUP BY login_name
 ),
 
--- 过去7日存款统计（9.15-9.21）
+-- 过去7日存款统计（9.14-9.20）
 -- 结构同上，用于判断"断存"（7日无数据=NULL）和"存款下滑"（7日均 < 30日均×50%）
 dep_7d AS (
     SELECT login_name,
@@ -128,7 +128,7 @@ dep_7d AS (
         SELECT LOWER(TRIM(login_name)) AS login_name, pt,
                SUM(CAST(deposit_amount AS DOUBLE)) AS daily_dep
         FROM SuperEngineProject.dws_user_deposit_sum_di
-        WHERE pt >= '20260915' AND pt <= '20260921'
+        WHERE pt >= '20260914' AND pt <= '20260920'
           AND trans_site_id IN (1,5,6,11,33)
         GROUP BY LOWER(TRIM(login_name)), pt
         HAVING SUM(CAST(deposit_amount AS DOUBLE)) > 0
@@ -140,7 +140,7 @@ dep_7d AS (
 -- 第三部分：投注行为统计（分组判断用，相对于9.21）
 -- ============================
 
--- 过去30日投注统计（8.23-9.21）
+-- 过去30日投注统计（8.22-9.20）
 -- 结构同存款：日均投注 = 总投注额 / 有投注天数
 bet_30d AS (
     SELECT login_name,
@@ -151,7 +151,7 @@ bet_30d AS (
         SELECT LOWER(TRIM(login_name)) AS login_name, pt,
                SUM(CAST(totalvalidamount AS DOUBLE)) AS daily_bet
         FROM superengineproject.t_daily_bet_all
-        WHERE pt >= '20260823' AND pt <= '20260921'
+        WHERE pt >= '20260822' AND pt <= '20260920'
           AND bet_site_id IN (1,5,6,11,33)
         GROUP BY LOWER(TRIM(login_name)), pt
         HAVING SUM(CAST(totalvalidamount AS DOUBLE)) > 0
@@ -159,7 +159,7 @@ bet_30d AS (
     GROUP BY login_name
 ),
 
--- 过去7日投注统计（9.15-9.21）
+-- 过去7日投注统计（9.14-9.20）
 -- bet_days_7d 同时用于：
 --   ① 判断"投注下滑"（7日日均 < 30日日均×50%）
 --   ② 判断"高活跃"（投注天数≥4）
@@ -172,7 +172,7 @@ bet_7d AS (
         SELECT LOWER(TRIM(login_name)) AS login_name, pt,
                SUM(CAST(totalvalidamount AS DOUBLE)) AS daily_bet
         FROM superengineproject.t_daily_bet_all
-        WHERE pt >= '20260915' AND pt <= '20260921'
+        WHERE pt >= '20260914' AND pt <= '20260920'
           AND bet_site_id IN (1,5,6,11,33)
         GROUP BY LOWER(TRIM(login_name)), pt
         HAVING SUM(CAST(totalvalidamount AS DOUBLE)) > 0
