@@ -167,16 +167,17 @@ WITH survey_users AS (
     ) t(login_name)
 ),
 
--- 最新VIP等级
+-- 最新集团用户等级
 vip AS (
-    SELECT login_name, lv
+    SELECT login_name, level_current
     FROM (
         SELECT
             LOWER(TRIM(login_name)) AS login_name,
-            lv,
-            ROW_NUMBER() OVER (PARTITION BY LOWER(TRIM(login_name)) ORDER BY pt DESC, lv DESC) AS rn
-        FROM superengineproject.dwd_user_bp_lv_3_df
-        WHERE pt >= '20260901'
+            level_current,
+            ROW_NUMBER() OVER (PARTITION BY LOWER(TRIM(login_name)) ORDER BY pt DESC) AS rn
+        FROM dgsg_prod.dws_coo_user_detail_metrics_ext_di
+        WHERE business_line = 'BP'
+          AND pt >= '20260901'
     ) t
     WHERE rn = 1
 ),
@@ -295,7 +296,7 @@ ggr AS (
 SELECT
     /*+MAPJOIN(su)*/
     su.login_name,
-    v.lv                            AS vip_level,
+    v.level_current                  AS vip_level,
     COALESCE(d.dice_count, 0)       AS dice_born_count,
     COALESCE(tr.task_redeem_amount, 0)     AS task_redeem_amount,
     COALESCE(mr.map_redeem_amount, 0)      AS map_redeem_amount,
