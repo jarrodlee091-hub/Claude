@@ -326,7 +326,7 @@ dice AS (
     SELECT
         LOWER(TRIM(login_name)) AS login_name,
         SUM(born_count) AS dice_count
-    FROM horizon_workspace_bingoplus_3.ods_mms_t_user_fragments_di
+    FROM superengineproject.ods_mms_t_user_fragments_di
     WHERE pt >= '20260911' AND pt <= '20260924'
     GROUP BY LOWER(TRIM(login_name))
 ),
