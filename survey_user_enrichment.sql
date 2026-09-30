@@ -440,14 +440,14 @@ SELECT
     su.q8_rule_clarity,
     su.q26_future_interest,
     v.level_current                  AS vip_level,
-    COALESCE(d.dice_count, 0)       AS dice_born_count,
-    COALESCE(tr.task_redeem_amount, 0)     AS task_redeem_amount,
-    COALESCE(mr.map_redeem_amount, 0)      AS map_redeem_amount,
-    COALESCE(t3.top300_redeem_amount, 0)   AS top300_redeem_amount,
-    COALESCE(mp.monopoly_redeem_amount, 0) AS monopoly_redeem_amount,
-    COALESCE(ot.other_redeem_amount, 0)    AS other_redeem_amount,
-    COALESCE(ot.other_activity_count, 0)   AS other_activity_count,
-    COALESCE(g.ggr, 0)              AS ggr
+    d.dice_count                     AS dice_born_count,
+    tr.task_redeem_amount,
+    mr.map_redeem_amount,
+    t3.top300_redeem_amount,
+    mp.monopoly_redeem_amount,
+    ot.other_redeem_amount,
+    ot.other_activity_count,
+    g.ggr
 FROM survey_users su
 LEFT JOIN vip v
     ON su.login_name = v.login_name
