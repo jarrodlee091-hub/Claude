@@ -573,9 +573,10 @@ vip AS (
 task_release AS (
     SELECT
         LOWER(TRIM(login_name)) AS login_name,
-        SUM(release_amount) AS task_release_amount
-    FROM superengineproject.dwd_mms_user_release_info_di
+        SUM(claimed_amount) AS task_release_amount
+    FROM superengineproject.dwd_mms_user_claimed_info_di
     WHERE pt >= '20260911' AND pt <= '20260924'
+      AND release_business = 'BP'
       AND activity_id IN (
         '6aa103bbe4b07fc7051c16be','6aa10b8be4b07fc726c4c142',
         '6aa10478e4b07fc755e79ad2','6aa10c70e4b07fc77262a6dc',
