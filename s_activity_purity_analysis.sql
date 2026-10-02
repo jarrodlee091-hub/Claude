@@ -52,12 +52,14 @@ user_level AS (
       AND pt = MAX_PT('dgsg_prod.dws_coo_user_detail_metrics_ext_di')
 ),
 
--- GGR（活动前 + 活动期）
+-- GGR + 投注天数（活动前 + 活动期）
 ggr_agg AS (
     SELECT
         LOWER(TRIM(login_name)) AS login_name,
         SUM(IF(pt >= '20260911', CAST(bingoggr AS DOUBLE), 0)) AS ggr_act,
-        SUM(IF(pt <= '20260910', CAST(bingoggr AS DOUBLE), 0)) AS ggr_pre
+        SUM(IF(pt <= '20260910', CAST(bingoggr AS DOUBLE), 0)) AS ggr_pre,
+        COUNT(DISTINCT IF(pt >= '20260911', pt, NULL)) AS bet_days_act,
+        COUNT(DISTINCT IF(pt <= '20260910', pt, NULL)) AS bet_days_pre
     FROM superengineproject.t_daily_bet_all
     WHERE pt >= '20260901' AND pt <= '20260924'
       AND bet_site_id IN (1,5,6,11,33)
@@ -77,6 +79,8 @@ user_detail AS (
         r.all_redeem_pre,
         COALESCE(g.ggr_act, 0) AS ggr_act,
         COALESCE(g.ggr_pre, 0) AS ggr_pre,
+        COALESCE(g.bet_days_act, 0) AS bet_days_act,
+        COALESCE(g.bet_days_pre, 0) AS bet_days_pre,
 
         -- 纯净度梯队（左开右闭）
         -- 0%: 没有大富翁核销
@@ -112,6 +116,15 @@ SELECT
     IF(GROUPING(purity_tier) = 1, '合计', purity_tier) AS 纯净度梯队,
 
     COUNT(1) AS 人数,
+
+    ROUND(SUM(bet_days_act) / COUNT(1), 2) AS "9.11-9.24人均投注天数",
+    SUM(IF(bet_days_pre > 0, 1, 0)) AS "9.1-9.10投注人数",
+    ROUND(
+        IF(SUM(IF(bet_days_pre > 0, 1, 0)) > 0,
+           SUM(bet_days_pre) / SUM(IF(bet_days_pre > 0, 1, 0)),
+           0),
+        2
+    ) AS "9.1-9.10人均投注天数",
 
     ROUND(SUM(ggr_pre), 2) AS "9.1-9.10 GGR",
     ROUND(SUM(all_redeem_pre), 2) AS "9.1-9.10 核销总额",
