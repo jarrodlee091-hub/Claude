@@ -3,9 +3,9 @@
 -- 按投注总额降序排序
 
 SELECT
-    ROW_NUMBER() OVER (ORDER BY SUM(CAST(bet_amount AS DOUBLE)) DESC) AS 排名,
+    ROW_NUMBER() OVER (ORDER BY SUM(CAST(totalvalidamount AS DOUBLE)) DESC) AS 排名,
     LOWER(TRIM(login_name)) AS 用户,
-    ROUND(SUM(CAST(bet_amount AS DOUBLE)), 2) AS 投注,
+    ROUND(SUM(CAST(totalvalidamount AS DOUBLE)), 2) AS 投注,
     ROUND(SUM(CAST(bingoggr AS DOUBLE)), 2) AS GGR,
     ROUND(SUM(CAST(deposit AS DOUBLE)), 2) AS 存款,
     ROUND(SUM(CAST(withdraw AS DOUBLE)), 2) AS 取款,
@@ -14,6 +14,7 @@ FROM superengineproject.t_daily_bet_all
 WHERE pt >= '20260925' AND pt <= '20261001'
   AND bet_site_id IN (1,5,6,11,33)
 GROUP BY LOWER(TRIM(login_name))
+HAVING SUM(CAST(totalvalidamount AS DOUBLE)) > 0
 ORDER BY 投注 DESC
 LIMIT 500
 ;
