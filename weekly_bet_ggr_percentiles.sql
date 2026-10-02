@@ -1,10 +1,8 @@
 -- 9.2-9.8 按前端等级分组的7日累计投注额分位数与对应区间GGR
 -- 前端等级以9.2快照为准
 -- 用户分组：LV1-3, LV4, LV5, LV6-9
+-- 统一用 NTILE(100) 划分分位区间，确保两部分用户一致
 
--- ============================================================
--- 第一部分：投注额分位数
--- ============================================================
 WITH
 user_level AS (
     SELECT login_name, lv
@@ -41,26 +39,36 @@ user_data AS (
         END AS user_group
     FROM user_agg u
     LEFT JOIN user_level l ON u.login_name = l.login_name
+),
+
+user_ranked AS (
+    SELECT
+        login_name, total_bet, total_ggr, user_group,
+        NTILE(100) OVER (PARTITION BY user_group ORDER BY total_bet) AS pctl
+    FROM user_data
 )
 
+-- ============================================================
+-- 第一部分：投注额分位数（取每个区间的最大投注额作为阈值）
+-- ============================================================
 SELECT
     '2026-09-02 ~ 2026-09-08' AS 日期,
     user_group AS 用户分组,
     ROUND(SUM(total_bet), 2) AS 投注额总和,
-    ROUND(PERCENTILE_APPROX(total_bet, 0.10), 2) AS p10投注额,
-    ROUND(PERCENTILE_APPROX(total_bet, 0.20), 2) AS p20投注额,
-    ROUND(PERCENTILE_APPROX(total_bet, 0.30), 2) AS p30投注额,
-    ROUND(PERCENTILE_APPROX(total_bet, 0.40), 2) AS p40投注额,
-    ROUND(PERCENTILE_APPROX(total_bet, 0.50), 2) AS p50投注额,
-    ROUND(PERCENTILE_APPROX(total_bet, 0.60), 2) AS p60投注额,
-    ROUND(PERCENTILE_APPROX(total_bet, 0.70), 2) AS p70投注额,
-    ROUND(PERCENTILE_APPROX(total_bet, 0.80), 2) AS p80投注额,
-    ROUND(PERCENTILE_APPROX(total_bet, 0.90), 2) AS p90投注额,
-    ROUND(PERCENTILE_APPROX(total_bet, 0.95), 2) AS p95投注额,
-    ROUND(PERCENTILE_APPROX(total_bet, 0.99), 2) AS p99投注额,
+    ROUND(MAX(CASE WHEN pctl <= 10 THEN total_bet END), 2) AS p10投注额,
+    ROUND(MAX(CASE WHEN pctl <= 20 THEN total_bet END), 2) AS p20投注额,
+    ROUND(MAX(CASE WHEN pctl <= 30 THEN total_bet END), 2) AS p30投注额,
+    ROUND(MAX(CASE WHEN pctl <= 40 THEN total_bet END), 2) AS p40投注额,
+    ROUND(MAX(CASE WHEN pctl <= 50 THEN total_bet END), 2) AS p50投注额,
+    ROUND(MAX(CASE WHEN pctl <= 60 THEN total_bet END), 2) AS p60投注额,
+    ROUND(MAX(CASE WHEN pctl <= 70 THEN total_bet END), 2) AS p70投注额,
+    ROUND(MAX(CASE WHEN pctl <= 80 THEN total_bet END), 2) AS p80投注额,
+    ROUND(MAX(CASE WHEN pctl <= 90 THEN total_bet END), 2) AS p90投注额,
+    ROUND(MAX(CASE WHEN pctl <= 95 THEN total_bet END), 2) AS p95投注额,
+    ROUND(MAX(CASE WHEN pctl <= 99 THEN total_bet END), 2) AS p99投注额,
     ROUND(MAX(total_bet), 2) AS p100投注额,
     COUNT(1) AS 投注人数
-FROM user_data
+FROM user_ranked
 GROUP BY user_group
 ORDER BY user_group
 ;
@@ -68,8 +76,6 @@ ORDER BY user_group
 
 -- ============================================================
 -- 第二部分：落入投注额分位区间的用户GGR + 输赢统计
--- 用 NTILE(100) 按投注额排序给每个用户分配百分位
--- 区间：0-10%, 10-20%, ..., 90-95%, 95-99%, 99-100%
 -- ============================================================
 WITH
 user_level AS (
