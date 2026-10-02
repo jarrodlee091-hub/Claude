@@ -87,7 +87,8 @@ user_detail AS (
             WHEN r.s_redeem / r.all_redeem <= 0.40            THEN '20-40%'
             WHEN r.s_redeem / r.all_redeem <= 0.60            THEN '40-60%'
             WHEN r.s_redeem / r.all_redeem <= 0.80            THEN '60-80%'
-            ELSE                                                   '80-100%'
+            WHEN r.s_redeem / r.all_redeem < 1.0              THEN '80-100%'
+            ELSE                                                   '100%'
         END AS purity_tier,
 
         CASE
@@ -96,7 +97,8 @@ user_detail AS (
             WHEN r.s_redeem / r.all_redeem <= 0.40            THEN 2
             WHEN r.s_redeem / r.all_redeem <= 0.60            THEN 3
             WHEN r.s_redeem / r.all_redeem <= 0.80            THEN 4
-            ELSE                                                   5
+            WHEN r.s_redeem / r.all_redeem < 1.0              THEN 5
+            ELSE                                                   6
         END AS purity_sort
 
     FROM redeem_base r
