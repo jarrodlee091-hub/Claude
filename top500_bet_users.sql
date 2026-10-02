@@ -32,10 +32,11 @@ dep AS (
 wdr AS (
     SELECT
         LOWER(TRIM(login_name)) AS login_name,
-        ROUND(SUM(CAST(withdraw_amount AS DOUBLE)), 2) AS withdraw_amount
-    FROM SuperEngineProject.dws_user_withdraw_sum_di
+        ROUND(SUM(CAST(amount AS DOUBLE)), 2) AS withdraw_amount
+    FROM superengineproject.dwd_c66_withdrawal_requests_i_d
     WHERE pt >= '20260925' AND pt <= '20261001'
       AND trans_site_id IN (1,5,6,11,33)
+      AND flag = 2
     GROUP BY LOWER(TRIM(login_name))
 )
 
