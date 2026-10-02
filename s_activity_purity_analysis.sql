@@ -117,7 +117,12 @@ SELECT
 
     COUNT(1) AS 人数,
 
-    ROUND(SUM(bet_days_act) / COUNT(1), 2) AS "9.11-9.24人均投注天数",
+    ROUND(
+        IF(SUM(IF(bet_days_act > 0, 1, 0)) > 0,
+           SUM(bet_days_act) / SUM(IF(bet_days_act > 0, 1, 0)),
+           0),
+        2
+    ) AS "9.11-9.24人均投注天数",
     SUM(IF(bet_days_pre > 0, 1, 0)) AS "9.1-9.10投注人数",
     ROUND(
         IF(SUM(IF(bet_days_pre > 0, 1, 0)) > 0,
