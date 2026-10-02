@@ -40,29 +40,16 @@ wdr AS (
     GROUP BY LOWER(TRIM(login_name))
 ),
 
--- 活动1核销
-redeem1 AS (
+-- 大富翁地图核销（两个活动合并）
+map_redeem AS (
     SELECT
         LOWER(TRIM(login_name)) AS login_name,
-        ROUND(SUM(CAST(redeem_amount AS DOUBLE)), 2) AS redeem_amount_1
+        ROUND(SUM(CAST(redeem_amount AS DOUBLE)), 2) AS map_redeem_amount
     FROM superengineproject.bi_dwd_all_promo_user_redeem_info_di
     WHERE pt >= '20260925' AND pt <= '20261001'
       AND is_valid_redeem = 1
       AND budget_source_product_line IN ('BP', 'COMMUNITY', 'VIBER')
-      AND activity_id = '6aa125ace4b07fc7dccce891'
-    GROUP BY LOWER(TRIM(login_name))
-),
-
--- 活动2核销
-redeem2 AS (
-    SELECT
-        LOWER(TRIM(login_name)) AS login_name,
-        ROUND(SUM(CAST(redeem_amount AS DOUBLE)), 2) AS redeem_amount_2
-    FROM superengineproject.bi_dwd_all_promo_user_redeem_info_di
-    WHERE pt >= '20260925' AND pt <= '20261001'
-      AND is_valid_redeem = 1
-      AND budget_source_product_line IN ('BP', 'COMMUNITY', 'VIBER')
-      AND activity_id = '6aa114bfe4b07fc759b3f4c2'
+      AND activity_id IN ('6aa125ace4b07fc7dccce891', '6aa114bfe4b07fc759b3f4c2')
     GROUP BY LOWER(TRIM(login_name))
 )
 
@@ -74,13 +61,11 @@ SELECT
     d.deposit_amount AS 存款,
     w.withdraw_amount AS 取款,
     b.bet_days AS 投注天数,
-    r1.redeem_amount_1 AS 活动核销_6aa125ac,
-    r2.redeem_amount_2 AS 活动核销_6aa114bf
+    mr.map_redeem_amount AS 核销大富翁地图金额
 FROM bet b
 LEFT JOIN dep d ON b.login_name = d.login_name
 LEFT JOIN wdr w ON b.login_name = w.login_name
-LEFT JOIN redeem1 r1 ON b.login_name = r1.login_name
-LEFT JOIN redeem2 r2 ON b.login_name = r2.login_name
+LEFT JOIN map_redeem mr ON b.login_name = mr.login_name
 ORDER BY b.bet_amount DESC
 LIMIT 500
 ;
