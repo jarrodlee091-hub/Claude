@@ -54,7 +54,7 @@ user_bet_grp AS (
 )
 
 SELECT
-    pt AS 日期,
+    CONCAT(SUBSTR(pt,1,4),'-',SUBSTR(pt,5,2),'-',SUBSTR(pt,7,2)) AS 日期,
     user_group AS 用户分组,
     ROUND(SUM(daily_bet), 2) AS 投注额总和,
     ROUND(PERCENTILE_APPROX(daily_bet, 0.10), 2) AS p10投注额,
