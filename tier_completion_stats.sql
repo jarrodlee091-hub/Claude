@@ -70,7 +70,7 @@ tiers AS (
            450000, 0, '0.00%'
 )
 
-SELECT
+SELECT /*+MAPJOIN(t)*/
     t.tier_name                                                    AS 阶梯档位,
 
     t.t13                                                          AS "LV1-3 累计门槛",
