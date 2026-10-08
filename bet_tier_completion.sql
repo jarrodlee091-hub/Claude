@@ -48,10 +48,10 @@ user_tier AS (
     JOIN vip v ON v.login_name = b.login_name
     JOIN thresholds th
         ON th.lv_grp = CASE
-            WHEN COALESCE(v.level_current, 0) BETWEEN 0 AND 3 THEN 'V0-3'
-            WHEN COALESCE(v.level_current, 0) BETWEEN 4 AND 5 THEN 'V4-5'
+            WHEN v.level_current IN ('V0','V1','V2','V3') THEN 'V0-3'
+            WHEN v.level_current IN ('V4','V5')            THEN 'V4-5'
         END
-    WHERE COALESCE(v.level_current, 0) BETWEEN 0 AND 5
+    WHERE v.level_current IN ('V0','V1','V2','V3','V4','V5')
 )
 
 SELECT
