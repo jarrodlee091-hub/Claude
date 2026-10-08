@@ -7,10 +7,10 @@
 WITH
 thresholds AS (
     SELECT 'V0-3' AS lv_grp, 1 AS sort_lv,
-           2000 AS t1, 5000 AS t2, 10000 AS t3, 30000 AS t4
+           4000 AS t1, 10000 AS t2, 30000 AS t3, 60000 AS t4
     UNION ALL
     SELECT 'V4-5', 2,
-           50000, 80000, 150000, 300000
+           40000, 100000, 600000, 1000000
 ),
 
 vip AS (
