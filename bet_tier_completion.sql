@@ -17,12 +17,17 @@ thresholds AS (
 ),
 
 vip AS (
-    SELECT
-        LOWER(TRIM(login_name)) AS login_name,
-        level_current
-    FROM dgsg_prod.dws_coo_user_detail_metrics_ext_di
-    WHERE business_line = 'BP'
-      AND pt = MAX_PT('dgsg_prod.dws_coo_user_detail_metrics_ext_di')
+    SELECT login_name, level_current
+    FROM (
+        SELECT
+            LOWER(TRIM(login_name)) AS login_name,
+            level_current,
+            ROW_NUMBER() OVER (PARTITION BY LOWER(TRIM(login_name)) ORDER BY level_current DESC) AS rn
+        FROM dgsg_prod.dws_coo_user_detail_metrics_ext_di
+        WHERE business_line = 'BP'
+          AND pt = MAX_PT('dgsg_prod.dws_coo_user_detail_metrics_ext_di')
+    ) t
+    WHERE rn = 1
 ),
 
 bet AS (
